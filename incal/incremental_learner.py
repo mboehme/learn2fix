@@ -3,8 +3,8 @@ import time
 import pysmt.shortcuts as smt
 from pysmt.exceptions import InternalSolverError
 
-from .observe import observe
-from .learner import Learner, NoFormulaFound
+from observe import observe
+from learner import Learner, NoFormulaFound
 
 
 class IncrementalObserver(observe.SpecializedObserver):

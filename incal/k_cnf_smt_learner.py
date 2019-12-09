@@ -6,7 +6,7 @@ from pysmt.fnode import FNode
 from pysmt.typing import REAL
 from typing import Set, Tuple, List
 
-from .incremental_learner import IncrementalLearner
+from incremental_learner import IncrementalLearner
 from pywmi import Domain
 
 

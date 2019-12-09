@@ -2,7 +2,7 @@ import heapq
 
 import time
 
-from .learner import NoFormulaFound
+from learner import NoFormulaFound
 
 
 class ParameterFrontier(object):
