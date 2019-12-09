@@ -1,0 +1,505 @@
+---
+title: "ICST"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(scales)
+theme_set(theme_bw())
+```
+
+
+```{r echo=FALSE}
+compute_mean = function(data, filename) {
+  filename = paste(filename, ".Rda", sep="")
+  
+  # compute only once
+  if(file.exists(filename)) {
+    load(filename)
+    return(mean_data)
+  }
+  
+  mean_data = data.frame("subject"=character(), 
+                         "totalgen"=numeric(),  "labelgen" = numeric(), 
+                         "totalfail"=numeric(), "labelfail"= numeric(),
+                         "vTotal"=numeric(),  "vCorrect" = numeric(), 
+                         "vTotalfail"=numeric(), "vCorrectfail"= numeric())
+
+  for (Subject in levels(factor(data$V1))){
+    Runs = 0
+    # Generation
+    Totalgen = 0
+    Labelgen = 0
+    Totalfail = 0
+    Labelfail = 0
+    
+    # Validation
+    VTotal = 0
+    VCorrect = 0
+    VTotalfail = 0
+    VCorrectfail = 0
+    
+    
+    for (Run in levels(factor(subset(data,V1 == Subject)$V2))) {
+      run_specific = subset(data, V1 == Subject & V2 == Run)
+      if (nrow(run_specific) != 0) {
+        Runs = Runs + 1
+        Totalgen = Totalgen + run_specific$V3
+        Labelgen = Labelgen + run_specific$V4
+        Totalfail = Totalfail + run_specific$V5
+        Labelfail = Labelfail + run_specific$V6
+        
+        VTotal = VTotal + run_specific$V7
+        VCorrect = VCorrect + run_specific$V8
+        VTotalfail = VTotalfail + run_specific$V9
+        VCorrectfail = VCorrectfail + run_specific$V10
+      }
+    }
+    mean_data <- rbind (mean_data,
+                        data.frame(subject=Subject,
+                                   totalgen = Totalgen / Runs,
+                                   labelgen = Labelgen / Runs,
+                                   totalfail = Totalfail / Runs,
+                                   labelfail = Labelfail / Runs,
+                                   vTotal = VTotal / Runs,
+                                   vCorrect = VCorrect / Runs,
+                                   vTotalfail = VTotalfail / Runs,
+                                   vCorrectfail = VCorrectfail / Runs
+                                   ))
+  }
+  save(mean_data,file=filename)
+  return(mean_data)
+}
+```
+
+# Oracle Quality
+```{r echo=FALSE}
+oracle_quality = data.frame("subject"=character(), "max_label"=character(), "category"=character(),
+                            "variable"=character(),  "value" = numeric())
+validation = data.frame("subject"=character(), category = character(), variable = character(), number = integer())
+validation2 = data.frame("subject"=character(), category = character(), variable = character(), number = integer())
+d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results10")
+
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="10",
+                                                      category = "Accuracy", variable = "Overall", 
+                                                      value = specific$vCorrect / specific$vTotal))
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="10", 
+                                                      category = "Accuracy", variable = "Failing", 
+                                                      value = specific$vCorrectfail / specific$vTotalfail))
+  validation <- rbind(validation, data.frame(subject = Subject, category = "Validation Tests", 
+                                             variable = "Passing Tests",
+                                             number = specific$vTotal - specific$vTotalfail ))
+  validation <- rbind(validation, data.frame(subject = Subject, category = "Validation Tests", 
+                                             variable = "Failing Tests",
+                                             number = specific$vTotalfail))
+  validation2 <- rbind(validation2, data.frame(subject = Subject, category = "Valid. Fail. Rate", 
+                                               variable = "%Failing", 
+                                               number = specific$vTotalfail / specific$vTotal))
+}
+
+d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results20")
+if (length(levels(factor(mean_data$subject))) != length(levels(factor(d$V1)))) {
+  print("DELETE results20.Rda")
+  knit_exit()
+}
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="20",
+                                                      category = "Accuracy", variable = "Overall", 
+                                                      value = specific$vCorrect / specific$vTotal))
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="20", 
+                                                      category = "Accuracy", variable = "Failing", 
+                                                      value = specific$vCorrectfail / specific$vTotalfail))
+}
+
+d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results30")
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="30",
+                                                      category = "Accuracy", variable = "Overall", 
+                                                      value = specific$vCorrect / specific$vTotal))
+  oracle_quality <- rbind (oracle_quality, data.frame(subject = Subject, max_label="30", 
+                                                      category = "Accuracy", variable = "Failing", 
+                                                      value = specific$vCorrectfail / specific$vTotalfail))
+}
+
+ggplot(oracle_quality, aes(max_label, value)) +
+  geom_boxplot(aes(fill= max_label)) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_grid(~ variable) +
+  xlab("Max. Labeling Effort l") + ylab("Prediction Accuracy") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "accuracy.pdf", width=7, scale=0.8)
+
+head(subset(oracle_quality, max_label=="10" & variable == "Overall"))
+quantile(subset(oracle_quality, max_label=="10" & variable == "Overall")$value)
+
+print(paste("Average/Median prediction accuracy (-l 10): ", mean(subset(oracle_quality, max_label=="10" & variable == "Overall")$value),median(subset(oracle_quality, max_label=="10" & variable == "Overall")$value)))
+print(paste("Average/Median prediction accuracy (-l 20): ", mean(subset(oracle_quality, max_label=="20" & variable == "Overall")$value),median(subset(oracle_quality, max_label=="20" & variable == "Overall")$value)))
+print(paste("Average/Median prediction accuracy (-l 30): ", mean(subset(oracle_quality, max_label=="30" & variable == "Overall")$value),median(subset(oracle_quality, max_label=="30" & variable == "Overall")$value)))
+print(paste("Average/Median conditional accuracy (-l 10): ", mean(subset(oracle_quality, max_label=="10" & variable == "Failing")$value),median(subset(oracle_quality, max_label=="10" & variable == "Failing")$value)))
+print(paste("Average/Median conditional accuracy (-l 20): ", mean(subset(oracle_quality, max_label=="20" & variable == "Failing")$value),median(subset(oracle_quality, max_label=="20" & variable == "Failing")$value)))
+print(paste("Average/Median conditional accuracy (-l 30): ", mean(subset(oracle_quality, max_label=="30" & variable == "Failing")$value),median(subset(oracle_quality, max_label=="30" & variable == "Failing")$value)))
+
+ggplot(validation, aes(variable, number)) +
+  geom_boxplot(aes(fill=variable)) +
+  scale_y_log10(limits=c(1,1000)) +
+  facet_grid(~ category) +
+  xlab("") + ylab("Number of validation tests") +
+  scale_fill_grey(start = 0.6, end = .9) +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black"))
+ggsave(filename = "validation.pdf", width=3,scale=0.8)
+
+print(paste("Average number of passing tests: ", mean(subset(validation, variable=="Passing Tests")$number)))
+print(paste("Average number of failing tests: ", mean(subset(validation, variable=="Failing Tests")$number)))
+
+ggplot(validation2, aes(variable, number)) +
+  geom_boxplot(aes(fill=variable)) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_grid(~ category) +
+  xlab("") + ylab("Proportion of failing validation tests") +
+  scale_fill_grey(start = 0.6, end = .9) +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black"))
+ggsave(filename = "validation2.pdf", width=2.2,scale=0.8)
+```
+
+# Human Effort
+```{r echo = FALSE}
+human_effort = data.frame("subject"=character(), "max_label"=character(),
+                            "variable"=character(),  "value" = numeric())
+human_effort2 = data.frame("subject"=character(), "max_label"=character(),
+                            "variable"=character(),  "value" = numeric())
+human_effort3 = data.frame("subject"=character(), "max_label"=character(),
+                            "variable"=character(),  "value" = numeric())
+d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results10")
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="10",
+                                                  variable = "Prob. to generate a failing test",
+                                                  value = specific$totalfail / specific$totalgen))
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="10",
+                                                  variable = "Prob. to label a failing test",
+                                                  value = specific$labelfail / specific$labelgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="10",
+                                                  variable = "%Generated tests that are labeled",
+                                                  value = specific$labelgen/specific$totalgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="10",
+                                                  variable = "%Failing tests that are labeled",
+                                                  value = specific$labelfail/ specific$totalfail))
+  human_effort3 <- rbind (human_effort3, data.frame(subject = Subject, max_label="10",
+                                                  variable = "Improved",
+                                                  value = (specific$labelfail / specific$labelgen) / (specific$totalfail / specific$totalgen)))
+}
+
+d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results20")
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="20",
+                                                  variable = "Prob. to generate a failing test",
+                                                  value = specific$totalfail / specific$totalgen))
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="20",
+                                                  variable = "Prob. to label a failing test",
+                                                  value = specific$labelfail / specific$labelgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="20",
+                                                  variable = "%Generated tests that are labeled",
+                                                  value = specific$labelgen/specific$totalgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="20",
+                                                  variable = "%Failing tests that are labeled",
+                                                  value = specific$labelfail/ specific$totalfail))
+  human_effort3 <- rbind (human_effort3, data.frame(subject = Subject, max_label="20",
+                                                  variable = "Improved",
+                                                  value = (specific$labelfail / specific$labelgen) / (specific$totalfail / specific$totalgen)))
+}
+
+d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+mean_data = compute_mean(d, "results30")
+for (Subject in levels(factor(mean_data$subject))){
+  specific = subset(mean_data, subject == Subject)
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="30",
+                                                  variable = "Prob. to generate a failing test",
+                                                  value = specific$totalfail / specific$totalgen))
+  human_effort <- rbind (human_effort, data.frame(subject = Subject, max_label="30",
+                                                  variable = "Prob. to label a failing test",
+                                                  value = specific$labelfail / specific$labelgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="30",
+                                                  variable = "%Generated tests that are labeled",
+                                                  value = specific$labelgen/specific$totalgen))
+  human_effort2 <- rbind (human_effort2, data.frame(subject = Subject, max_label="30",
+                                                  variable = "%Failing tests that are labeled",
+                                                  value = specific$labelfail/ specific$totalfail))
+  human_effort3 <- rbind (human_effort3, data.frame(subject = Subject, max_label="30",
+                                                  variable = "Improved",
+                                                  value = (specific$labelfail / specific$labelgen) / (specific$totalfail / specific$totalgen)))
+}
+
+print(paste("Average/Median %Generated tests that are labeled (-l 10): ", mean(subset(human_effort2, max_label=="10" & variable == "%Generated tests that are labeled")$value),median(subset(human_effort2, max_label=="10" & variable == "%Generated tests that are labeled")$value)))
+print(paste("Average/Median %Generated tests that are labeled (-l 20): ", mean(subset(human_effort2, max_label=="20" & variable == "%Generated tests that are labeled")$value),median(subset(human_effort2, max_label=="20" & variable == "%Generated tests that are labeled")$value)))
+print(paste("Average/Median %Generated tests that are labeled (-l 30): ", mean(subset(human_effort2, max_label=="30" & variable == "%Generated tests that are labeled")$value, na.rm=TRUE),median(subset(human_effort2, max_label=="30" & variable == "%Generated tests that are labeled")$value, na.rm=TRUE)))
+print(paste("Average/Median %Failing tests that are labeled (-l 10): ", mean(subset(human_effort2, max_label=="10" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE),median(subset(human_effort2, max_label=="10" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE)))
+print(paste("Average/Median %Failing tests that are labeled (-l 20): ", mean(subset(human_effort2, max_label=="20" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE),median(subset(human_effort2, max_label=="20" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE)))
+print(paste("Average/Median %Failing tests that are labeled (-l 30): ", mean(subset(human_effort2, max_label=="30" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE),median(subset(human_effort2, max_label=="30" & variable == "%Failing tests that are labeled")$value, na.rm=TRUE)))
+
+
+print(paste("Average/Median Improved (-l 10): ", mean(subset(human_effort3, max_label=="10")$value, na.rm=TRUE), median(subset(human_effort3, max_label=="10")$value, na.rm=TRUE)))
+print(paste("Average/Median Improved (-l 20): ", mean(subset(human_effort3, max_label=="20")$value, na.rm=TRUE), median(subset(human_effort3, max_label=="20")$value, na.rm=TRUE)))
+print(paste("Average/Median Improved (-l 30): ", mean(subset(human_effort3, max_label=="30")$value, na.rm=TRUE), median(subset(human_effort3, max_label=="30")$value, na.rm=TRUE)))
+
+
+print(paste("Average/Median Prob. to generate a failing test (-l 10): ", mean(subset(human_effort, max_label=="10" & variable == "Prob. to generate a failing test")$value),median(subset(human_effort, max_label=="10" & variable == "Prob. to generate a failing test")$value)))
+print(paste("Average/Median Prob. to generate a failing test (-l 20): ", mean(subset(human_effort, max_label=="20" & variable == "Prob. to generate a failing test")$value),median(subset(human_effort, max_label=="20" & variable == "Prob. to generate a failing test")$value)))
+print(paste("Average/Median Prob. to generate a failing test (-l 30): ", mean(subset(human_effort, max_label=="30" & variable == "Prob. to generate a failing test")$value),median(subset(human_effort, max_label=="30" & variable == "Prob. to generate a failing test")$value)))
+print(paste("Average/Median Prob. to label a failing test (-l 10): ", mean(subset(human_effort, max_label=="10" & variable == "Prob. to label a failing test")$value),median(subset(human_effort, max_label=="10" & variable == "Prob. to label a failing test")$value)))
+print(paste("Average/Median Prob. to label a failing test (-l 20): ", mean(subset(human_effort, max_label=="20" & variable == "Prob. to label a failing test")$value),median(subset(human_effort, max_label=="20" & variable == "Prob. to label a failing test")$value)))
+print(paste("Average/Median Prob. to label a failing test (-l 30): ", mean(subset(human_effort, max_label=="30" & variable == "Prob. to label a failing test")$value),median(subset(human_effort, max_label=="30" & variable == "Prob. to label a failing test")$value)))
+
+ggplot(human_effort, aes(max_label, value)) +
+  geom_boxplot(aes(fill=max_label)) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_grid(~ variable) +
+  xlab("Max. Labeling Effort l") + ylab("Probability") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "effort2.pdf",scale=0.8)
+
+ggplot(human_effort2, aes(max_label, value)) +
+  geom_boxplot(aes(fill=max_label)) +
+  #scale_y_log10(limits=c(10,10000)) +
+  #scale_y_log10(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_grid(~ variable) +
+  xlab("Max. Labeling Effort l") + ylab("Proportion") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "effort1.pdf",scale=0.8)
+
+ggplot(human_effort3, aes(max_label, value)) +
+  geom_boxplot(aes(fill=max_label)) +
+  scale_y_log10() +
+  facet_grid(~ variable) +
+  xlab("Max. Labeling Effort l") + ylab("Times more likely than by random labeling") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+```
+
+
+# Patch Quality (Repairability)
+```{r echo=FALSE}
+patch_quality = data.frame("subject"=character(), "max_label"=character(),
+                           "variable"=character(),  "value" = numeric())
+d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
+for (i in 0:9) {
+  m_repair = 0
+  a_repair = 0
+  for (Subject in levels(factor(d$V1))){
+    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
+    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+  }
+  subjects = length(levels(factor(d$V1)))
+  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                    variable = "Manual", value = m_repair / subjects))
+  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                    variable = "10", value = a_repair / subjects))
+}
+
+print("-l 10")
+print(summary(d))
+d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+print("-l 20")
+print(summary(d))
+
+for (i in 0:9) {
+  m_repair = 0
+  a_repair = 0
+  for (Subject in levels(factor(d$V1))){
+    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
+    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+  }
+  subjects = length(levels(factor(d$V1)))
+  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                    variable = "20", value = a_repair / subjects))
+}
+
+d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+print("-l 30")
+print(summary(d))
+
+for (i in 0:9) {
+  m_repair = 0
+  a_repair = 0
+  for (Subject in levels(factor(d$V1))){
+    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
+    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+  }
+  subjects = length(levels(factor(d$V1)))
+  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                    variable = "30", value = a_repair / subjects))
+}
+
+ggplot(patch_quality, aes(variable, value)) +
+  geom_boxplot(aes(fill=variable)) +
+  scale_y_continuous(labels = scales::percent,limits=c(0,0.3)) +
+  facet_grid(~ max_label) +
+  xlab("Max. Labeling Effort l") + ylab("%Subjects Repaired") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "repairability.pdf",scale=0.7)
+```
+
+```{r}
+training = data.frame("subject"=character(), "max_label"=character(),
+                      "variable"=character(),  "value" = numeric())
+d = read.table("manualTrainingTSsize.csv",sep=",",comment.char = "#")
+for (Subject in levels(factor(d$V1))){
+  specific = subset(d, V1 == Subject)
+  training <- rbind (training, data.frame(subject = Subject, max_label="",
+                                          variable = "Manual TS",
+                                                  value = specific$V2))
+}
+
+print(paste("Average/Median training test suite: ", 
+            mean(training$value, na.rm=TRUE),
+            median(training$value, na.rm=TRUE)))
+
+ggplot(training, aes(max_label, value)) +
+  geom_boxplot(aes(fill=max_label)) +
+  scale_y_log10() +
+  facet_grid(~ variable) +
+  xlab("") + ylab("Manual Training Test Suite Size") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "training.pdf", width=2.2,scale=0.7)
+```
+
+# Patch Quality (Validation Test Suite: Together)
+```{r echo=FALSE,eval=FALSE}
+d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
+d_10 = subset(d, V12 == "REPAIR" & V18 == "REPAIR")
+
+d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+d_20 = subset(d, V12 == "REPAIR" & V18 == "REPAIR")
+
+d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+d_30 = subset(d, V12 == "REPAIR" & V18 == "REPAIR")
+
+
+patch_quality2 = data.frame(subject=c(d_10$V1,d_10$V1,d_20$V1,d_20$V1,d_30$V1,d_30$V1),
+                            max_label = c(rep("10", nrow(d_10)),
+                                          rep("10", nrow(d_10)),
+                                          rep("20", nrow(d_20)),
+                                          rep("20", nrow(d_20)),
+                                          rep("30", nrow(d_30)),
+                                          rep("30", nrow(d_30))),
+                            variable = c(rep("Manual", nrow(d_10)),
+                                         rep("Autogen", nrow(d_10)),
+                                         rep("Manual", nrow(d_20)),
+                                         rep("Autogen", nrow(d_20)),
+                                         rep("Manual", nrow(d_30)),
+                                         rep("Autogen", nrow(d_30))),
+                            value = c(d_10$V14/d_10$V15,
+                                      d_10$V20/d_10$V21,
+                                      d_20$V14/d_20$V15,
+                                      d_20$V20/d_20$V21,
+                                      d_30$V14/d_30$V15,
+                                      d_30$V20/d_30$V21))
+
+ggplot(patch_quality2, aes(variable, value)) +
+  geom_boxplot(aes(fill=variable)) +
+  scale_y_continuous(labels = scales::percent, limits=c(0,1)) +
+  facet_grid(~ max_label) +
+  xlab("Max. Labeling Effort l") + ylab("") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+```
+
+# Patch Quality (Validation Test Suite: Individually)
+```{r echo=FALSE}
+d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
+d_10_manual = subset(d, V12 == "REPAIR")
+d_10_autogen = subset(d, V18 == "REPAIR")
+
+d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+d_20_manual = subset(d, V12 == "REPAIR")
+d_20_autogen = subset(d, V18 == "REPAIR")
+
+d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
+d_30_manual = subset(d, V12 == "REPAIR")
+d_30_autogen = subset(d, V18 == "REPAIR")
+
+
+print(paste("l10 (manual):",nrow(d_10_manual)))
+print(paste("l10 (autogen):",nrow(d_10_autogen)))
+#print(paste("l10 (both):",nrow(d_10)))
+print(paste("l20 (manual):",nrow(d_20_manual)))
+print(paste("l20 (autogen):",nrow(d_20_autogen)))
+#print(paste("l20 (both):",nrow(d_20)))
+print(paste("l30 (manual):",nrow(d_30_manual)))
+print(paste("l30 (autogen):",nrow(d_30_autogen)))
+#print(paste("l30 (both):",nrow(d_30)))
+
+
+patch_quality3 = data.frame(subject=c(d_10_manual$V1,d_10_autogen$V1,
+                                      d_20_autogen$V1,d_30_autogen$V1),
+                            max_label = c(rep("Validation Score", nrow(d_10_manual)),
+                                          rep("Validation Score", nrow(d_10_autogen)),
+                                          rep("Validation Score", nrow(d_20_autogen)),
+                                          rep("Validation Score", nrow(d_30_autogen))),
+                            variable = c(rep("Manual", nrow(d_10_manual)),
+                                         rep("10", nrow(d_10_autogen)),
+                                         rep("20", nrow(d_20_autogen)),
+                                         rep("30", nrow(d_30_autogen))),
+                            value = c(d_10_manual$V14/d_10_manual$V15,
+                                      d_10_autogen$V20/d_10_autogen$V21,
+                                      d_20_autogen$V20/d_20_autogen$V21,
+                                      d_30_autogen$V20/d_30_autogen$V21))
+patch_quality3$variable <- factor(patch_quality3$variable,
+    levels = c('Manual','10','20','30'),ordered = TRUE)
+
+print(paste("Average/Median Manual: ", 
+            mean(1-d_10_manual$V14/d_10_manual$V15, na.rm=TRUE),
+            median(1-d_10_manual$V14/d_10_manual$V15, na.rm=TRUE)))
+print(paste("Average/Median -l 10: ", 
+            mean(1-d_10_autogen$V20/d_10_autogen$V21, na.rm=TRUE),
+            median(1-d_10_autogen$V20/d_10_autogen$V21, na.rm=TRUE)))
+print(paste("Average/Median -l 20: ", 
+            mean(1-d_20_autogen$V20/d_20_autogen$V21, na.rm=TRUE),
+            median(1-d_20_autogen$V20/d_20_autogen$V21, na.rm=TRUE)))
+print(paste("Average/Median -l 30: ", 
+            mean(1-d_30_autogen$V20/d_30_autogen$V21, na.rm=TRUE),
+            median(1-d_30_autogen$V20/d_30_autogen$V21, na.rm=TRUE)))
+
+ggplot(patch_quality3, aes(variable, value)) +
+  geom_boxplot(aes(fill=variable)) +
+  scale_y_continuous(labels = scales::percent, limits=c(0,1)) +
+  facet_grid(~ max_label) +
+  xlab("Max. Labeling Effort l") + ylab("% Heldout Test Cases Passed") +
+  theme(legend.position="none", legend.title= element_blank(),
+        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+  scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "patchquality.pdf",scale=0.7)
+```
