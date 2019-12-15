@@ -142,7 +142,7 @@ ggplot(oracle_quality, aes(max_label, value)) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
   scale_fill_grey(start = 0.6, end = .9)
-ggsave(filename = "accuracy.pdf", width=7, scale=0.8)
+ggsave(filename = "accuracy.pdf", width=7, height=4, scale=0.8)
 
 head(subset(oracle_quality, max_label=="10" & variable == "Overall"))
 quantile(subset(oracle_quality, max_label=="10" & variable == "Overall")$value)
@@ -154,6 +154,86 @@ print(paste("Average/Median conditional accuracy (-l 10): ", mean(subset(oracle_
 print(paste("Average/Median conditional accuracy (-l 20): ", mean(subset(oracle_quality, max_label=="20" & variable == "Failing")$value),median(subset(oracle_quality, max_label=="20" & variable == "Failing")$value)))
 print(paste("Average/Median conditional accuracy (-l 30): ", mean(subset(oracle_quality, max_label=="30" & variable == "Failing")$value),median(subset(oracle_quality, max_label=="30" & variable == "Failing")$value)))
 
+print("SIGNIFICANCE TEST (Overall accuracy)")
+subjects10 = levels(factor(subset(oracle_quality, 
+                                  max_label==10 & category=="Accuracy" & variable == "Overall")$subject))
+subjects20 = levels(factor(subset(oracle_quality, 
+                                  max_label==20 & category=="Accuracy" & variable == "Overall")$subject))
+subjects30 = levels(factor(subset(oracle_quality, 
+                                  max_label==30 & category=="Accuracy" & variable == "Overall")$subject))
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 20:",
+nrow(subset(oracle_quality,max_label==10 & category=="Accuracy" & variable == "Overall" 
+            & subject %in% intersect(subjects10,subjects20))),
+" vs. ",
+nrow(subset(oracle_quality,max_label==20 & category=="Accuracy" & variable == "Overall"
+            & subject %in% intersect(subjects10,subjects20)))))
+
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 30:",
+nrow(subset(oracle_quality,max_label==20 & category=="Accuracy" & variable == "Overall" 
+            & subject %in% intersect(subjects20,subjects30))),
+" vs. ",
+nrow(subset(oracle_quality,max_label==30 & category=="Accuracy" & variable == "Overall"
+            & subject %in% intersect(subjects20,subjects30)))))
+
+print("One-sided paired Wilcoxon test (-l 10 vs -l 20)")
+print(wilcox.test(subset(oracle_quality,
+                         max_label==10 & category=="Accuracy" & variable == "Overall" 
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  subset(oracle_quality,
+                         max_label==20 & category=="Accuracy" & variable == "Overall"
+                         & subject %in% intersect(subjects10,subjects20))$value,
+            paired=TRUE, alternative = "less"))
+
+print("One-sided paired Wilcoxon test (-l 20 vs -l 30)")
+print(wilcox.test(subset(oracle_quality,
+                         max_label==20 & category=="Accuracy" & variable == "Overall" 
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  subset(oracle_quality,
+                         max_label==30 & category=="Accuracy" & variable == "Overall"
+                         & subject %in% intersect(subjects20,subjects30))$value,
+            paired=TRUE, alternative = "less"))
+
+
+print("SIGNIFICANCE TEST (Conditional accuracy)")
+subjects10 = levels(factor(subset(oracle_quality, 
+                                  max_label==10 & category=="Accuracy" & variable == "Failing")$subject))
+subjects20 = levels(factor(subset(oracle_quality, 
+                                  max_label==20 & category=="Accuracy" & variable == "Failing")$subject))
+subjects30 = levels(factor(subset(oracle_quality, 
+                                  max_label==30 & category=="Accuracy" & variable == "Failing")$subject))
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 20:",
+nrow(subset(oracle_quality,max_label==10 & category=="Accuracy" & variable == "Failing" 
+            & subject %in% intersect(subjects10,subjects20))),
+" vs. ",
+nrow(subset(oracle_quality,max_label==20 & category=="Accuracy" & variable == "Failing"
+            & subject %in% intersect(subjects10,subjects20)))))
+
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 30:",
+nrow(subset(oracle_quality,max_label==20 & category=="Accuracy" & variable == "Failing" 
+            & subject %in% intersect(subjects20,subjects30))),
+" vs. ",
+nrow(subset(oracle_quality,max_label==30 & category=="Accuracy" & variable == "Overall"
+            & subject %in% intersect(subjects20,subjects30)))))
+
+print("One-sided paired Wilcoxon test (-l 10 vs -l 20)")
+print(wilcox.test(subset(oracle_quality,
+                         max_label==10 & category=="Accuracy" & variable == "Failing" 
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  subset(oracle_quality,
+                         max_label==20 & category=="Accuracy" & variable == "Failing"
+                         & subject %in% intersect(subjects10,subjects20))$value,
+            paired=TRUE, alternative = "less"))
+
+print("One-sided paired Wilcoxon test (-l 20 vs -l 30)")
+print(wilcox.test(subset(oracle_quality,
+                         max_label==20 & category=="Accuracy" & variable == "Failing" 
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  subset(oracle_quality,
+                         max_label==30 & category=="Accuracy" & variable == "Failing"
+                         & subject %in% intersect(subjects20,subjects30))$value,
+            paired=TRUE, alternative = "less"))
+
+
 ggplot(validation, aes(variable, number)) +
   geom_boxplot(aes(fill=variable)) +
   scale_y_log10(limits=c(1,1000)) +
@@ -162,7 +242,7 @@ ggplot(validation, aes(variable, number)) +
   scale_fill_grey(start = 0.6, end = .9) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black"))
-ggsave(filename = "validation.pdf", width=3,scale=0.8)
+ggsave(filename = "validation.pdf", width=3,height=4.2,scale=0.77)
 
 print(paste("Average number of passing tests: ", mean(subset(validation, variable=="Passing Tests")$number)))
 print(paste("Average number of failing tests: ", mean(subset(validation, variable=="Failing Tests")$number)))
@@ -175,7 +255,7 @@ ggplot(validation2, aes(variable, number)) +
   scale_fill_grey(start = 0.6, end = .9) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black"))
-ggsave(filename = "validation2.pdf", width=2.2,scale=0.8)
+ggsave(filename = "validation2.pdf", width=2.2,height=4.2,scale=0.77)
 ```
 
 # Human Effort
@@ -269,6 +349,114 @@ print(paste("Average/Median Prob. to label a failing test (-l 10): ", mean(subse
 print(paste("Average/Median Prob. to label a failing test (-l 20): ", mean(subset(human_effort, max_label=="20" & variable == "Prob. to label a failing test")$value),median(subset(human_effort, max_label=="20" & variable == "Prob. to label a failing test")$value)))
 print(paste("Average/Median Prob. to label a failing test (-l 30): ", mean(subset(human_effort, max_label=="30" & variable == "Prob. to label a failing test")$value),median(subset(human_effort, max_label=="30" & variable == "Prob. to label a failing test")$value)))
 
+print("SIGNIFICANCE TEST (%Generated tests that are labeled)")
+subjects10 = levels(factor(subset(human_effort2, 
+                                  max_label==10 & variable == "%Generated tests that are labeled")$subject))
+subjects20 = levels(factor(subset(human_effort2, 
+                                  max_label==20 & variable == "%Generated tests that are labeled")$subject))
+subjects30 = levels(factor(subset(human_effort2, 
+                                  max_label==30 & variable == "%Generated tests that are labeled")$subject))
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 20:",
+            nrow(subset(human_effort2,max_label==10 & variable == "%Generated tests that are labeled" 
+                        & subject %in% intersect(subjects10,subjects20))),
+            " vs. ",
+            nrow(subset(human_effort2,max_label==20 & variable == "%Generated tests that are labeled"
+                        & subject %in% intersect(subjects10,subjects20)))))
+
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 30:",
+            nrow(subset(human_effort2,max_label==20 & variable == "%Generated tests that are labeled" 
+                        & subject %in% intersect(subjects20,subjects30))),
+            " vs. ",
+            nrow(subset(human_effort2,max_label==30 & variable == "%Generated tests that are labeled"
+                        & subject %in% intersect(subjects20,subjects30)))))
+
+print("One-sided paired Wilcoxon test (-l 10 vs -l 20)")
+print(wilcox.test(subset(human_effort2,
+                         max_label==10 & variable == "%Generated tests that are labeled" 
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  subset(human_effort2,
+                         max_label==20 & variable == "%Generated tests that are labeled"
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  paired=TRUE, alternative = "greater"))
+
+print("One-sided paired Wilcoxon test (-l 20 vs -l 30)")
+print(wilcox.test(subset(human_effort2,
+                         max_label==20 & variable == "%Generated tests that are labeled" 
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  subset(human_effort2,
+                         max_label==30 & variable == "%Generated tests that are labeled"
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  paired=TRUE, alternative = "greater"))
+
+print("SIGNIFICANCE TEST (%Failing tests that are labeled)")
+subjects10 = levels(factor(subset(human_effort2, 
+                                  max_label==10 & variable == "%Failing tests that are labeled")$subject))
+subjects20 = levels(factor(subset(human_effort2, 
+                                  max_label==20 & variable == "%Failing tests that are labeled")$subject))
+subjects30 = levels(factor(subset(human_effort2, 
+                                  max_label==30 & variable == "%Failing tests that are labeled")$subject))
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 20:",
+            nrow(subset(human_effort2,max_label==10 & variable == "%Failing tests that are labeled" 
+                        & subject %in% intersect(subjects10,subjects20))),
+            " vs. ",
+            nrow(subset(human_effort2,max_label==20 & variable == "%Failing tests that are labeled"
+                        & subject %in% intersect(subjects10,subjects20)))))
+
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 30:",
+            nrow(subset(human_effort2,max_label==20 & variable == "%Failing tests that are labeled" 
+                        & subject %in% intersect(subjects20,subjects30))),
+            " vs. ",
+            nrow(subset(human_effort2,max_label==30 & variable == "%Failing tests that are labeled"
+                        & subject %in% intersect(subjects20,subjects30)))))
+
+print("One-sided paired Wilcoxon test (-l 10 vs -l 20)")
+print(wilcox.test(subset(human_effort2,
+                         max_label==10 & variable == "%Failing tests that are labeled" 
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  subset(human_effort2,
+                         max_label==20 & variable == "%Failing tests that are labeled"
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  paired=TRUE, alternative = "greater"))
+
+print("SIGNIFICANCE TEST (Prob. to label a failing test)")
+subjects10 = levels(factor(subset(human_effort, 
+                                  max_label==10 & variable == "Prob. to label a failing test")$subject))
+subjects20 = levels(factor(subset(human_effort, 
+                                  max_label==20 & variable == "Prob. to label a failing test")$subject))
+subjects30 = levels(factor(subset(human_effort, 
+                                  max_label==30 & variable == "Prob. to label a failing test")$subject))
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 20:",
+            nrow(subset(human_effort,max_label==10 & variable == "Prob. to label a failing test" 
+                        & subject %in% intersect(subjects10,subjects20))),
+            " vs. ",
+            nrow(subset(human_effort,max_label==20 & variable == "Prob. to label a failing test"
+                        & subject %in% intersect(subjects10,subjects20)))))
+
+print(paste("Same number of rows (subjets are filtered and ordered by name) -l 30:",
+            nrow(subset(human_effort,max_label==20 & variable == "Prob. to label a failing test" 
+                        & subject %in% intersect(subjects20,subjects30))),
+            " vs. ",
+            nrow(subset(human_effort,max_label==30 & variable == "Prob. to label a failing test"
+                        & subject %in% intersect(subjects20,subjects30)))))
+
+print("One-sided paired Wilcoxon test (-l 10 vs -l 20)")
+print(wilcox.test(subset(human_effort,
+                         max_label==10 & variable == "Prob. to label a failing test" 
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  subset(human_effort,
+                         max_label==20 & variable == "Prob. to label a failing test"
+                         & subject %in% intersect(subjects10,subjects20))$value,
+                  paired=TRUE, alternative = "less"))
+
+print("One-sided paired Wilcoxon test (-l 20 vs -l 30)")
+print(wilcox.test(subset(human_effort,
+                         max_label==20 & variable == "Prob. to label a failing test" 
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  subset(human_effort,
+                         max_label==30 & variable == "Prob. to label a failing test"
+                         & subject %in% intersect(subjects20,subjects30))$value,
+                  paired=TRUE, alternative = "less"))
+
 ggplot(human_effort, aes(max_label, value)) +
   geom_boxplot(aes(fill=max_label)) +
   scale_y_continuous(labels = scales::percent) +
@@ -277,7 +465,7 @@ ggplot(human_effort, aes(max_label, value)) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
   scale_fill_grey(start = 0.6, end = .9)
-ggsave(filename = "effort2.pdf",scale=0.8)
+ggsave(filename = "effort2.pdf",height=5.2,scale=0.5)
 
 ggplot(human_effort2, aes(max_label, value)) +
   geom_boxplot(aes(fill=max_label)) +
@@ -289,7 +477,7 @@ ggplot(human_effort2, aes(max_label, value)) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
   scale_fill_grey(start = 0.6, end = .9)
-ggsave(filename = "effort1.pdf",scale=0.8)
+ggsave(filename = "effort1.pdf",height=5.2,scale=0.5)
 
 ggplot(human_effort3, aes(max_label, value)) +
   geom_boxplot(aes(fill=max_label)) +
@@ -307,19 +495,19 @@ ggplot(human_effort3, aes(max_label, value)) +
 patch_quality = data.frame("subject"=character(), "max_label"=character(),
                            "variable"=character(),  "value" = numeric())
 d = read.table("results-l-10-t-5-g-10-runs.csv",sep=",",comment.char = "#")
-for (i in 0:9) {
-  m_repair = 0
-  a_repair = 0
-  for (Subject in levels(factor(d$V1))){
-    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
-    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
-    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
-  }
-  subjects = length(levels(factor(d$V1)))
-  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
-                                                    variable = "Manual", value = m_repair / subjects))
-  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
-                                                    variable = "10", value = a_repair / subjects))
+for (i in 1:30) {
+    m_repair = 0
+    a_repair = 0
+    for (Subject in levels(factor(d$V1))){
+        specific = subset(d, V1 == Subject & V2 == i)
+        if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+        if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+    }
+    subjects = length(levels(factor(d$V1)))
+    patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                      variable = "Manual", value = m_repair / subjects))
+    patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                      variable = "10", value = a_repair / subjects))
 }
 
 print("-l 10")
@@ -328,45 +516,45 @@ d = read.table("results-l-20-t-10-g-10-runs.csv",sep=",",comment.char = "#")
 print("-l 20")
 print(summary(d))
 
-for (i in 0:9) {
-  m_repair = 0
-  a_repair = 0
-  for (Subject in levels(factor(d$V1))){
-    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
-    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
-    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
-  }
-  subjects = length(levels(factor(d$V1)))
-  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
-                                                    variable = "20", value = a_repair / subjects))
+for (i in 1:30) {
+    m_repair = 0
+    a_repair = 0
+    for (Subject in levels(factor(d$V1))){
+        specific = subset(d, V1 == Subject & V2 == i)
+        if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+        if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+    }
+    subjects = length(levels(factor(d$V1)))
+    patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                      variable = "20", value = a_repair / subjects))
 }
 
 d = read.table("results-l-30-t-10-g-10-runs.csv",sep=",",comment.char = "#")
 print("-l 30")
 print(summary(d))
 
-for (i in 0:9) {
-  m_repair = 0
-  a_repair = 0
-  for (Subject in levels(factor(d$V1))){
-    specific = subset(d, V1 == Subject & V2 > i*3 & V2 <= i*3+3)
-    if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
-    if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
-  }
-  subjects = length(levels(factor(d$V1)))
-  patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
-                                                    variable = "30", value = a_repair / subjects))
+for (i in 1:30) {
+    m_repair = 0
+    a_repair = 0
+    for (Subject in levels(factor(d$V1))){
+        specific = subset(d, V1 == Subject & V2 == i)
+        if ("REPAIR" %in% specific$V12) m_repair = m_repair + 1
+        if ("REPAIR" %in% specific$V18) a_repair = a_repair + 1
+    }
+    subjects = length(levels(factor(d$V1)))
+    patch_quality <- rbind (patch_quality, data.frame(subject = Subject, max_label="Repairability",
+                                                      variable = "30", value = a_repair / subjects))
 }
 
 ggplot(patch_quality, aes(variable, value)) +
-  geom_boxplot(aes(fill=variable)) +
-  scale_y_continuous(labels = scales::percent,limits=c(0,0.3)) +
-  facet_grid(~ max_label) +
-  xlab("Max. Labeling Effort l") + ylab("%Subjects Repaired") +
-  theme(legend.position="none", legend.title= element_blank(),
-        axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
-  scale_fill_grey(start = 0.6, end = .9)
-ggsave(filename = "repairability.pdf",scale=0.7)
+    geom_boxplot(aes(fill=variable)) +
+    scale_y_continuous(labels = scales::percent,limits=c(0,0.3)) +
+    facet_grid(~ max_label) +
+    xlab("Max. Labeling Effort l") + ylab("%Subjects Repaired") +
+    theme(legend.position="none", legend.title= element_blank(),
+          axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
+    scale_fill_grey(start = 0.6, end = .9)
+ggsave(filename = "repairability.pdf",scale=0.45, height=6)
 ```
 
 ```{r}
@@ -463,20 +651,30 @@ print(paste("l30 (autogen):",nrow(d_30_autogen)))
 #print(paste("l30 (both):",nrow(d_30)))
 
 
-patch_quality3 = data.frame(subject=c(d_10_manual$V1,d_10_autogen$V1,
-                                      d_20_autogen$V1,d_30_autogen$V1),
-                            max_label = c(rep("Validation Score", nrow(d_10_manual)),
-                                          rep("Validation Score", nrow(d_10_autogen)),
-                                          rep("Validation Score", nrow(d_20_autogen)),
-                                          rep("Validation Score", nrow(d_30_autogen))),
-                            variable = c(rep("Manual", nrow(d_10_manual)),
-                                         rep("10", nrow(d_10_autogen)),
-                                         rep("20", nrow(d_20_autogen)),
-                                         rep("30", nrow(d_30_autogen))),
-                            value = c(d_10_manual$V14/d_10_manual$V15,
-                                      d_10_autogen$V20/d_10_autogen$V21,
-                                      d_20_autogen$V20/d_20_autogen$V21,
-                                      d_30_autogen$V20/d_30_autogen$V21))
+patch_quality3 = data.frame(subject=d_10_manual$V1,
+                            max_label = rep("Validation Score", nrow(d_10_manual)),
+                            variable = rep("Manual", nrow(d_10_manual)),
+                            value = d_10_manual$V14/d_10_manual$V15)
+patch_quality3 = rbind(patch_quality3, 
+                       data.frame(subject=d_10_autogen$V1,
+                            max_label = rep("Validation Score", nrow(d_10_autogen)),
+                            variable = rep("10", nrow(d_10_autogen)),
+                            value = d_10_autogen$V20/d_10_autogen$V21))
+patch_quality3 = rbind(patch_quality3, 
+                       data.frame(subject=d_20_autogen$V1,
+                            max_label = rep("Validation Score", nrow(d_20_autogen)),
+                            variable = rep("20", nrow(d_20_autogen)),
+                            value = d_20_autogen$V20/d_20_autogen$V21))
+patch_quality3 = rbind(patch_quality3, 
+                       data.frame(subject=d_30_autogen$V1,
+                            max_label = rep("Validation Score", nrow(d_30_autogen)),
+                            variable = rep("30", nrow(d_30_autogen)),
+                            value = d_30_autogen$V20/d_30_autogen$V21))
+
+#value = c(d_10_manual$V14/d_10_manual$V15,
+#                                      d_10_autogen$V20/d_10_autogen$V21,
+#                                      d_20_autogen$V20/d_20_autogen$V21,
+#                                      d_30_autogen$V20/d_30_autogen$V21))
 patch_quality3$variable <- factor(patch_quality3$variable,
     levels = c('Manual','10','20','30'),ordered = TRUE)
 
@@ -493,6 +691,14 @@ print(paste("Average/Median -l 30: ",
             mean(1-d_30_autogen$V20/d_30_autogen$V21, na.rm=TRUE),
             median(1-d_30_autogen$V20/d_30_autogen$V21, na.rm=TRUE)))
 
+print("SIGNIFICANCE TEST")
+print("Manual vs. 10")
+print(wilcox.test(subset(patch_quality3,variable=="Manual")$value,subset(patch_quality3,variable=="10")$value,alternative = "less"))
+print("10 vs. 20")
+print(wilcox.test(subset(patch_quality3,variable=="10")$value,subset(patch_quality3,variable=="20")$value,alternative = "less"))
+print("20 vs. 30")
+print(wilcox.test(subset(patch_quality3,variable=="20")$value,subset(patch_quality3,variable=="30")$value))
+
 ggplot(patch_quality3, aes(variable, value)) +
   geom_boxplot(aes(fill=variable)) +
   scale_y_continuous(labels = scales::percent, limits=c(0,1)) +
@@ -501,5 +707,5 @@ ggplot(patch_quality3, aes(variable, value)) +
   theme(legend.position="none", legend.title= element_blank(),
         axis.text.x = element_text(colour = "black"), axis.text.y = element_text(colour = "black")) +
   scale_fill_grey(start = 0.6, end = .9)
-ggsave(filename = "patchquality.pdf",scale=0.7)
+ggsave(filename = "patchquality.pdf",scale=0.45, height=5.9)
 ```
