@@ -14,7 +14,7 @@ docker run -it squareslab/genprog /bin/bash
 Download and set up any dependencies
 ```bash
 apt-get update
-apt-get -y install git time build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev wget z3
+apt-get -y install git time build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev wget z3 bc
 
 # Install python
 pushd /tmp
