@@ -18,11 +18,11 @@ repair_dir=$codeflaws_dir/../
 rm $codeflaws_dir/*/autogen* &> /dev/null
 rm $codeflaws_dir/*/incal* &> /dev/null
 
-if ! [ -e $repair_dir/smtlearnercodes ]; then
-  echo $repair_dir/smtlearnercodes does not exist.
+if ! [ -e $repair_dir/learn2fix ]; then
+  echo $repair_dir/learn2fix does not exist.
   exit
 fi
-cp $repair_dir/smtlearnercodes/repairs/genprog/* $repair_dir/
+cp $repair_dir/learn2fix/repairs/genprog/* $repair_dir/
 if [ -e $repair_dir/genprog-run ]; then
   echo "[INFO] Saving $repair_dir/genprog-run.." 1>&2
   rm -rf $repair_dir/genprog-run.old 2> /dev/null
@@ -60,7 +60,7 @@ for s in $(ls -1d $codeflaws_dir/*/); do
         gcc -fno-optimize-sibling-calls -fno-strict-aliasing -fno-asm -std=c99 -c $s/$golden.c -o $s/$golden.o &> /dev/null
         gcc $s/$golden.o -o $s/$golden -lm -s -O2 &> /dev/null
       fi
-      cp $repair_dir/smtlearnercodes/repairs/genprog/test-genprog-incal.py $s/
+      cp $repair_dir/learn2fix/repairs/genprog/test-genprog-incal.py $s/
 
       for i in $(seq 1 $(nproc --all)); do
         #will produce the i-th test suite and do the repair subsequently
