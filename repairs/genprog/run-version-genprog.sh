@@ -8,7 +8,7 @@ version=$1
 genprog="/opt/genprog/bin/genprog" # location of the installed genprog
 iteration=$2
 testsuite=$3
-
+timelimit=$4
 
 kill_descendant_processes() {
     local pid="$1"
@@ -94,11 +94,11 @@ if [[ "$version" == *"-bug-"* ]]; then
    rm -rf repair.cache
    rm -rf repair.debug.*
    #echo "[INFO] RUNNING CMD:$genprog configuration-$version" 1>&2
-   timeout -k 300s 300s $genprog configuration-$version &> $rundir/temp-$version-$iteration-$testsuite.out
+   timeout -k 0 $timelimit $genprog configuration-$version &> $rundir/temp-$version-$iteration-$testsuite.out
    timespent=$(grep "TOTAL" "$rundir/temp-$version-$iteration-$testsuite.out" | cut -d'=' -f1 | awk '{print $NF}')
    #echo "[INFO] Time Spent: $timespent" 1>&2
    if [ -z "${timespent}" ]; then
-     print_results $version "TIMEOUT" 300
+     print_results $version "TIMEOUT" $timelimit
    fi
    if [ ! -f "$rundir/tempworkdir-$version-$iteration-$testsuite/build.log" ]; then
      print_results $version "BUILDFAILED:FILE" $timespent
@@ -107,7 +107,7 @@ if [[ "$version" == *"-bug-"* ]]; then
    elif  grep -q "nexpected" "$rundir/temp-$version-$iteration-$testsuite.out"; then
      print_results $version "VERIFICATIONFAILED" $timespent
    elif grep -q "Timeout" "$rundir/temp-$version-$iteration-$testsuite.out"; then
-     print_results $version "TIMEOUT" 300
+     print_results $version "TIMEOUT" $timelimit
    elif grep -q "Repair Found" "$rundir/temp-$version-$iteration-$testsuite.out"; then
      contestnum=$(echo "$version" | cut -d$'-' -f1)
      probnum=$(echo "$version" | cut -d$'-' -f2)

@@ -63,13 +63,12 @@ for s in $(ls -1d $codeflaws_dir/*/); do
       cp $repair_dir/learn2fix/repairs/genprog/test-genprog-incal.py $s/
 
       for i in $(seq 1 $(nproc --all)); do
-        #will produce the i-th test suite and do the repair subsequently
         (
           autotest=$(timeout 11m ./Learn2Fix.py -t 10 -s $s -i $i)
 
           if [ $? -eq 0 ]; then
-            manual=$($repair_dir/run-version-genprog.sh $subject $i manual)
-            autogen=$($repair_dir/run-version-genprog.sh $subject $i autogen)
+            manual=$($repair_dir/run-version-genprog.sh $subject $i manual 10m)
+            autogen=$($repair_dir/run-version-genprog.sh $subject $i autogen 10m)
             # Parse output and echo comma-separated values (attached to output from Learn2Fix)
             #./extract_genprog_results.sh $subject $i $repair_dir/genprog-summary.log
             echo $autotest | tr -d '\n'
