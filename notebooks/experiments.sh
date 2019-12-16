@@ -65,12 +65,9 @@ for s in $(ls -1d $codeflaws_dir/*/); do
       for i in $(seq 1 $(nproc --all)); do
         (
           autotest=$(timeout 11m ./Learn2Fix.py -t 10 -s $s -i $i)
-
           if [ $? -eq 0 ]; then
             manual=$($repair_dir/run-version-genprog.sh $subject $i manual 10m)
             autogen=$($repair_dir/run-version-genprog.sh $subject $i autogen 10m)
-            # Parse output and echo comma-separated values (attached to output from Learn2Fix)
-            #./extract_genprog_results.sh $subject $i $repair_dir/genprog-summary.log
             echo $autotest | tr -d '\n'
             echo ,$manual | tr -d '\n'
             echo ,$autogen
