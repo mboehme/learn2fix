@@ -1,5 +1,23 @@
 # Learn2Fix
+Learn2Fix is a human-in-the-loop automatic repair technique for programs that take numeric inputs. Given a test input that reproduces the bug, Learn2Fix uses mutational fuzzing to generate alternative test inputs, and presents some of those to the human to ask whether they also reproduce the bug. Meanwhile, Learn2Fix uses the [Incal](https://github.com/ML-KULeuven/incal) constraint learning tool to construct a Satisfiability Modulo Linear Real Arithmetic SMT(LRA) constraint that is satisfied only by test inputs labeled as reproducing the bug. SMT provides a natural representation of program semantics and is a fundamental building block of symbolic execution and semantic program repair. The learned SMT constraint serves as an automatic bug oracle that can predict the label of new test inputs. Iteratively, the oracle is trained to predict the user’s responses with increasing accuracy. Using the trained oracle, the user can be asked more strategically. The key challenge that Learn2Fix addresses is to maximize the oracle’s accuracy, given only a limited number of queries to the user.
 
+* You can find the technical details in our ICST'20 paper: https://mboehme.github.io/paper/ICST20.pdf
+* To cite our paper, you can use the following bibtex entry:
+```bibtex
+@inproceedings{learn2fix,
+ author = {B\"ohme, Marcel and Geethal, Charaka and Pham, Van-Thuan},
+ title = {Human-In-The-Loop Automatic Program Repair},
+ booktitle = {Proceedings of the 2020 IEEE International Conference on Software Testing, Verification and Validation},
+ series = {ICST 2020},
+ year = {2020},
+ location = {Porto, Portugal},
+ pages = {1-12},
+ numpages = {12}
+} 
+
+```
+
+# How to run Learn2Fix
 To facilitate open science and reproducibility, we make our tool (Learn2Fix), data, and scripts available. Following are the concrete instructions to set up and run Learn2Fix on the Codeflaws benchmark to reproduce the results we reported in our paper.
 
 # Installation
@@ -75,7 +93,8 @@ export PYTHONPATH=$PYTHONPATH:$PWD/../incal/extras
 export PYTHONPATH=$PYTHONPATH:$PWD/../incal
 ```
 
-# Run Learn2Fix on Codeflaws
+# How to reproduce our results
+## Run Learn2Fix on Codeflaws
 Run the following command to execute Learn2Fix. Learn2Fix produces several CSV files, one for each experimental run (e.g., results_it_1.csv for the first run)
 ```bash
 cd $learn2fix/notebooks
@@ -84,4 +103,10 @@ cd $learn2fix/notebooks
 Once the experiment completes, concatenate all CSV files to form a single file containing all results
 ```bash
 cat results_it_*.csv > results_all.csv
+```
+
+## Run Plot.Rmd on the files that are produced
+See Plot.Rmd and our data under the results folder
+```bash
+ls $learn2fix/results
 ```
