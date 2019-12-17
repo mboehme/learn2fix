@@ -23,7 +23,6 @@ Learn2Fix is implemented in Python, quickly set up in a Docker container, and us
 # How to run Learn2Fix
 To facilitate open science and reproducibility, we make our tool (Learn2Fix), data, and scripts available. Following are the concrete instructions to set up and run Learn2Fix on the Codeflaws benchmark to reproduce the results we reported in our paper.
 
-# Installation
 ## Step-1. Install Codeflaws with GenProg
 
 Set up a docker container for GenProg repair tool
