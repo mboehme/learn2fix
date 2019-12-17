@@ -13,9 +13,12 @@ Learn2Fix is a human-in-the-loop automatic repair technique for programs that ta
  location = {Porto, Portugal},
  pages = {1-12},
  numpages = {12}
-} 
-
+}
 ```
+Learn2Fix is implemented in Python, quickly set up in a Docker container, and uses the following projects:
+* Incal constraint learner: [Paper](https://www.ijcai.org/proceedings/2018/0323.pdf), [Tool](https://github.com/ML-KULeuven/incal)
+* GenProg test-driven repair: [Paper](https://web.eecs.umich.edu/~weimerw/p/weimer-tse2012-genprog.pdf), [Tool](https://github.com/squareslab/genprog-code)
+* CodeFlaws repair benchmark: [Paper](https://codeflaws.github.io/postercameraready.pdf), [Tool](https://codeflaws.github.io/)
 
 # How to run Learn2Fix
 To facilitate open science and reproducibility, we make our tool (Learn2Fix), data, and scripts available. Following are the concrete instructions to set up and run Learn2Fix on the Codeflaws benchmark to reproduce the results we reported in our paper.
