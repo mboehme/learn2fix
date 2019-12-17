@@ -64,7 +64,8 @@ cd /root/codeflaws/all-script
 git clone https://github.com/mboehme/learn2fix
 export learn2fix="$PWD/learn2fix"
 cd $learn2fix
-rm -rf latte-integrale-1.7.5
+# Install LattE
+wget https://github.com/latte-int/latte/releases/download/version_1_7_5/latte-integrale-1.7.5.tar.gz
 tar -xvzf latte-integrale-1.7.5.tar.gz
 cd latte-integrale-1.7.5
 ./configure
